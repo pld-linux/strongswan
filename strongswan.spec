@@ -1,57 +1,29 @@
-#
-# Conditional build:
-%bcond_with	tests		# build with tests
-%bcond_without	tests		# build without tests
-#
-Summary:	-
-Summary(pl.UTF-8):	-
+# TODO:
+#	- init script
+#	- kill skip_post_check_so
+#	- enable more configure options
+Summary:	IPsec-based VPN Solution for Linux
 Name:		strongswan
 Version:	4.5.0
 Release:	0.1
-License:	- (enter GPL/GPL v2/GPL v3/LGPL/BSD/BSD-like/other license name here)
-Group:		Applications
+License:	GPL v2
+Group:		Networking/Daemons
 Source0:	http://download.strongswan.org/%{name}-%{version}.tar.bz2
 # Source0-md5:	cfbd6efef87830a2e7cc4175bde7ac84
-#Source1:	-
-# Source1-md5:	-
-#Patch0:		%{name}-DESTDIR.patch
 URL:		http://www.strongswan.org/
 %if %{with initscript}
 BuildRequires:	rpmbuild(macros) >= 1.228
 Requires(post,preun):	/sbin/chkconfig
 Requires:	rc-scripts
 %endif
-#BuildRequires:	-
-#BuildRequires:	autoconf
-#BuildRequires:	automake
-#BuildRequires:	intltool
-#BuildRequires:	libtool
-#Requires(postun):	-
-#Requires(pre,post):	-
-#Requires(preun):	-
-#Requires:	-
-#Provides:	-
-#Provides:	group(foo)
-#Provides:	user(foo)
-#Obsoletes:	-
-#Conflicts:	-
-#BuildArch:	noarch
-#ExclusiveArch:	%{ix86}
+BuildRequires:	autoconf
+BuildRequires:	automake
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define         skip_post_check_so	libcharon.so.0.0.0 libhydra.so.0.0.0
 
 %description
-
-%description -l pl.UTF-8
-
-%package subpackage
-Summary:	-
-Summary(pl.UTF-8):	-
-Group:		-
-
-%description subpackage
-
-%description subpackage -l pl.UTF-8
+strongSwan is an OpenSource IPsec solution for the Linux operating
+system.
 
 %package libs
 Summary:	-
@@ -91,33 +63,10 @@ Statyczna biblioteka ....
 
 %prep
 %setup -q
-#%setup -q -c -T
-#%setup -q -n %{name}
-#%setup -q -n %{name}-%{version}.orig -a 1
-#%patch0 -p1
-
-# undos the source
-#find '(' -name '*.php' -o -name '*.inc' ')' -print0 | xargs -0 %{__sed} -i -e 's,\r$,,'
-
-# remove CVS control files
-#find -name CVS -print0 | xargs -0 rm -rf
-
-# you'll need this if you cp -a complete dir in source
-# cleanup backups after patching
-find '(' -name '*~' -o -name '*.orig' ')' -print0 | xargs -0 -r -l512 rm -f
 
 %build
-# if ac/am/* rebuilding is necessary, do it in this order and add
-# appropriate BuildRequires
-#%%{__intltoolize}
-#%%{__gettextize}
-#%%{__libtoolize}
-#{__aclocal}
 %{__autoconf}
-#%%{__autoheader}
 %{__automake}
-# if not running libtool or automake, but config.sub is too old:
-#cp -f /usr/share/automake/config.sub .
 %configure \
 	--enable-cisco-quirks
 %{__make}
@@ -128,26 +77,15 @@ find '(' -name '*~' -o -name '*.orig' ')' -print0 | xargs -0 -r -l512 rm -f
 
 %install
 rm -rf $RPM_BUILD_ROOT
-# create directories if necessary
-#install -d $RPM_BUILD_ROOT
 %if %{with initscript}
 install -d $RPM_BUILD_ROOT/etc/{sysconfig,rc.d/init.d}
 %endif
-#install -d $RPM_BUILD_ROOT%{_examplesdir}/%{name}-%{version}
 
 %{__make} install \
 	DESTDIR=$RPM_BUILD_ROOT
 
 %clean
 rm -rf $RPM_BUILD_ROOT
-
-%pre
-#groupadd -g xxx %{name}
-#useradd -u xxx -d /var/lib/%{name} -g %{name} -c "XXX User" %{name}
-
-%post
-
-%preun
 
 %postun
 if [ "$1" = "0" ]; then
@@ -183,7 +121,6 @@ fi
 %attr(755,root,root) %{_sbindir}/ipsec
 %{_mandir}/man[358]/*
 
-
 %if 0
 # if _sysconfdir != /etc:
 #%%dir %{_sysconfdir}
@@ -196,13 +133,4 @@ fi
 %if %{with initscript}
 %attr(754,root,root) /etc/rc.d/init.d/%{name}
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/%{name}
-%endif
-
-#%{_examplesdir}/%{name}-%{version}
-
-%if %{with subpackage}
-%files subpackage
-%defattr(644,root,root,755)
-#%doc extras/*.gz
-#%{_datadir}/%{name}-ext
 %endif
