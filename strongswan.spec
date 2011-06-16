@@ -4,12 +4,12 @@
 #	- enable more configure options
 Summary:	IPsec-based VPN Solution for Linux
 Name:		strongswan
-Version:	4.5.0
+Version:	4.5.2
 Release:	0.1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	http://download.strongswan.org/%{name}-%{version}.tar.bz2
-# Source0-md5:	cfbd6efef87830a2e7cc4175bde7ac84
+# Source0-md5:	ac33b8f849a274127f84df0838cae953
 URL:		http://www.strongswan.org/
 %if %{with initscript}
 BuildRequires:	rpmbuild(macros) >= 1.228
@@ -18,6 +18,7 @@ Requires:	rc-scripts
 %endif
 BuildRequires:	autoconf
 BuildRequires:	automake
+BuildRequires:	gmp-devel >= 4.1.5
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define         skip_post_check_so	libcharon.so.0.0.0 libhydra.so.0.0.0
 
