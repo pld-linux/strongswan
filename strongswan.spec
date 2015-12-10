@@ -1,11 +1,11 @@
 Summary:	IPsec-based VPN Solution for Linux
 Name:		strongswan
-Version:	5.3.2
+Version:	5.3.5
 Release:	0.1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	http://download.strongswan.org/%{name}-%{version}.tar.bz2
-# Source0-md5:	fab014be1477ef4ebf9a765e10f8802c
+# Source0-md5:	a2f9ea185f27e7f8413d4cd2ee61efe4
 URL:		http://www.strongswan.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -21,6 +21,8 @@ system.
 %setup -q
 
 %build
+%{__libtoolize}
+%{__aclocal}
 %{__autoconf}
 %{__automake}
 %configure \
@@ -35,6 +37,9 @@ rm -rf $RPM_BUILD_ROOT
 	DESTDIR=$RPM_BUILD_ROOT
 
 touch $RPM_BUILD_ROOT%{_sysconfdir}/ipsec.secrets
+
+rm $RPM_BUILD_ROOT%{_libdir}/ipsec/lib{charon,hydra,strongswan}.{la,so}
+rm $RPM_BUILD_ROOT%{_libdir}/ipsec/plugins/*.la
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -76,7 +81,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_libdir}/ipsec/scepclient
 %attr(755,root,root) %{_libdir}/ipsec/starter
 %attr(755,root,root) %{_libdir}/ipsec/stroke
-%attr(755,root,root) %{_libdir}/ipsec/*.so*
+%attr(755,root,root) %{_libdir}/ipsec/*.so.0*
 %dir %{_libdir}/ipsec/plugins
 %attr(755,root,root) %{_libdir}/ipsec/plugins/libstrongswan-*.so
 %attr(755,root,root) %{_sbindir}/ipsec
