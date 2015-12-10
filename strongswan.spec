@@ -10,7 +10,9 @@ URL:		http://www.strongswan.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	gmp-devel >= 4.1.5
-BuildRequires:  libcap-devel
+BuildRequires:	libcap-devel
+BuildRequires:	libtool
+BuildRequires:	pkgconfig
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -26,8 +28,8 @@ system.
 %{__autoconf}
 %{__automake}
 %configure \
-        --with-capabilities=libcap \
-        --disable-static
+	--with-capabilities=libcap \
+	--disable-static
 %{__make}
 
 %install
