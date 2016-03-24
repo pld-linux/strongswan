@@ -1,11 +1,11 @@
 Summary:	IPsec-based VPN Solution for Linux
 Name:		strongswan
-Version:	5.3.5
+Version:	5.4.0
 Release:	0.1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	http://download.strongswan.org/%{name}-%{version}.tar.bz2
-# Source0-md5:	a2f9ea185f27e7f8413d4cd2ee61efe4
+# Source0-md5:	9d7c77b0da9b69f859624897e5e9ebbf
 URL:		http://www.strongswan.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -40,7 +40,7 @@ rm -rf $RPM_BUILD_ROOT
 
 touch $RPM_BUILD_ROOT%{_sysconfdir}/ipsec.secrets
 
-rm $RPM_BUILD_ROOT%{_libdir}/ipsec/lib{charon,hydra,strongswan}.{la,so}
+rm $RPM_BUILD_ROOT%{_libdir}/ipsec/lib{charon,strongswan,vici}.{la,so}
 rm $RPM_BUILD_ROOT%{_libdir}/ipsec/plugins/*.la
 
 %clean
@@ -74,6 +74,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(600,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/ipsec.conf
 %attr(600,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/ipsec.secrets
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/strongswan.conf
+%dir %{_sysconfdir}/swanctl
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/swanctl/swanctl.conf
 %{systemdunitdir}/%{name}.service
 %attr(755,root,root) %{_bindir}/pki
 %dir %{_libdir}/ipsec
@@ -87,6 +89,7 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{_libdir}/ipsec/plugins
 %attr(755,root,root) %{_libdir}/ipsec/plugins/libstrongswan-*.so
 %attr(755,root,root) %{_sbindir}/ipsec
+%attr(755,root,root) %{_sbindir}/swanctl
 %{_datadir}/%{name}
 %{_mandir}/man[158]/*
 
