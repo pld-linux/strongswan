@@ -1,11 +1,11 @@
 Summary:	IPsec-based VPN Solution for Linux
 Name:		strongswan
-Version:	5.4.0
+Version:	5.5.0
 Release:	0.1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	http://download.strongswan.org/%{name}-%{version}.tar.bz2
-# Source0-md5:	9d7c77b0da9b69f859624897e5e9ebbf
+# Source0-md5:	a96fa7eb6c62b40143dadb064b6bd586
 URL:		http://www.strongswan.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
