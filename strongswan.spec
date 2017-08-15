@@ -1,11 +1,11 @@
 Summary:	IPsec-based VPN Solution for Linux
 Name:		strongswan
-Version:	5.5.3
+Version:	5.6.0
 Release:	0.1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	http://download.strongswan.org/%{name}-%{version}.tar.bz2
-# Source0-md5:	4afffe3c219bb2e04f09510905af836b
+# Source0-md5:	befb5e827d02433fea6669c20e11530a
 URL:		http://www.strongswan.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -40,7 +40,7 @@ rm -rf $RPM_BUILD_ROOT
 
 touch $RPM_BUILD_ROOT%{_sysconfdir}/ipsec.secrets
 
-rm $RPM_BUILD_ROOT%{_libdir}/ipsec/lib{charon,strongswan,vici}.{la,so}
+rm $RPM_BUILD_ROOT%{_libdir}/ipsec/lib{charon,strongswan,tpmtss,vici}.{la,so}
 rm $RPM_BUILD_ROOT%{_libdir}/ipsec/plugins/*.la
 
 %clean
@@ -85,7 +85,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_libdir}/ipsec/scepclient
 %attr(755,root,root) %{_libdir}/ipsec/starter
 %attr(755,root,root) %{_libdir}/ipsec/stroke
-%attr(755,root,root) %{_libdir}/ipsec/*.so.0*
+%attr(755,root,root) %{_libdir}/ipsec/libcharon.so.0*
+%attr(755,root,root) %{_libdir}/ipsec/libstrongswan.so.0*
+%attr(755,root,root) %{_libdir}/ipsec/libtpmtss.so.0*
+%attr(755,root,root) %{_libdir}/ipsec/libvici.so.0*
 %dir %{_libdir}/ipsec/plugins
 %attr(755,root,root) %{_libdir}/ipsec/plugins/libstrongswan-*.so
 %attr(755,root,root) %{_sbindir}/ipsec
