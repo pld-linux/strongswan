@@ -1,11 +1,11 @@
 Summary:	IPsec-based VPN Solution for Linux
 Name:		strongswan
-Version:	5.6.1
+Version:	5.6.2
 Release:	0.1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	http://download.strongswan.org/%{name}-%{version}.tar.bz2
-# Source0-md5:	cb2241f1b96c524cd15b1c0f50ed9a27
+# Source0-md5:	46aa3aa18fbc4bd528f9a0345ce79913
 URL:		http://www.strongswan.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -78,13 +78,14 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/swanctl/swanctl.conf
 %{systemdunitdir}/%{name}.service
 %attr(755,root,root) %{_bindir}/pki
+%dir %{_libexecdir}/ipsec
+%attr(755,root,root) %{_libexecdir}/ipsec/_copyright
+%attr(755,root,root) %{_libexecdir}/ipsec/_updown
+%attr(755,root,root) %{_libexecdir}/ipsec/charon
+%attr(755,root,root) %{_libexecdir}/ipsec/scepclient
+%attr(755,root,root) %{_libexecdir}/ipsec/starter
+%attr(755,root,root) %{_libexecdir}/ipsec/stroke
 %dir %{_libdir}/ipsec
-%attr(755,root,root) %{_libdir}/ipsec/_copyright
-%attr(755,root,root) %{_libdir}/ipsec/_updown
-%attr(755,root,root) %{_libdir}/ipsec/charon
-%attr(755,root,root) %{_libdir}/ipsec/scepclient
-%attr(755,root,root) %{_libdir}/ipsec/starter
-%attr(755,root,root) %{_libdir}/ipsec/stroke
 %attr(755,root,root) %{_libdir}/ipsec/libcharon.so.0*
 %attr(755,root,root) %{_libdir}/ipsec/libstrongswan.so.0*
 %attr(755,root,root) %{_libdir}/ipsec/libvici.so.0*
