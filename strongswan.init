@@ -4,11 +4,12 @@
 #
 # chkconfig:	2345 47 76
 #
-# description:	strongSwan IPsec IKEv1/IKEv2 daemon using ipsec.conf
+# description:	strongSwan IPsec IKEv1/IKEv2 daemon
 #
 # processname:	starter
 # pidfile:	/var/run/strongswan/starter.charon.pid
 # config:	/etc/strongswan/ipsec.conf
+# config:	/etc/strongswan/swanctl/swanctl.conf
 
 # Source function library
 . /etc/rc.d/init.d/functions
@@ -38,7 +39,11 @@ case "$1" in
 		msg_starting "strongSwan"
 		daemon /usr/sbin/strongswan start $STRONGSWAN_OPTIONS
 		RETVAL=$?
-		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/strongswan
+		if [ $RETVAL -eq 0 ]; then
+			touch /var/lock/subsys/strongswan
+			show "Loading swanctl configuration"
+			daemon /usr/sbin/swanctl --load-all --noprompt
+		fi
 	else
 		msg_already_running "strongSwan"
 	fi
@@ -63,6 +68,8 @@ case "$1" in
 		msg_reloading "strongSwan"
 		/usr/sbin/strongswan reload
 		RETVAL=$?
+		show "Reloading swanctl configuration"
+		daemon /usr/sbin/swanctl --load-all --noprompt
 	else
 		msg_not_running "strongSwan"
 		RETVAL=7
