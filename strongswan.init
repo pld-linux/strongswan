@@ -1,0 +1,84 @@
+#!/bin/sh
+#
+# strongswan	strongSwan IPsec IKEv1/IKEv2 daemon
+#
+# chkconfig:	2345 47 76
+#
+# description:	strongSwan IPsec IKEv1/IKEv2 daemon using ipsec.conf
+#
+# processname:	starter
+# pidfile:	/var/run/strongswan/starter.charon.pid
+# config:	/etc/strongswan/ipsec.conf
+
+# Source function library
+. /etc/rc.d/init.d/functions
+
+# Get network config
+. /etc/sysconfig/network
+
+# Get service config
+[ -f /etc/sysconfig/strongswan ] && . /etc/sysconfig/strongswan
+
+# Check that networking is up.
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
+		msg_network_down "strongSwan"
+		exit 1
+	fi
+else
+	exit 0
+fi
+
+PIDFILE=/var/run/strongswan/starter.charon.pid
+
+RETVAL=0
+case "$1" in
+  start)
+	if [ ! -f /var/lock/subsys/strongswan ]; then
+		msg_starting "strongSwan"
+		daemon /usr/sbin/strongswan start $STRONGSWAN_OPTIONS
+		RETVAL=$?
+		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/strongswan
+	else
+		msg_already_running "strongSwan"
+	fi
+	;;
+  stop)
+	if [ -f /var/lock/subsys/strongswan ]; then
+		msg_stopping "strongSwan"
+		/usr/sbin/strongswan stop
+		RETVAL=$?
+		rm -f /var/lock/subsys/strongswan
+	else
+		msg_not_running "strongSwan"
+	fi
+	;;
+  restart)
+	$0 stop
+	$0 start
+	exit $?
+	;;
+  reload|force-reload)
+	if [ -f /var/lock/subsys/strongswan ]; then
+		msg_reloading "strongSwan"
+		/usr/sbin/strongswan reload
+		RETVAL=$?
+	else
+		msg_not_running "strongSwan"
+		RETVAL=7
+	fi
+	;;
+  status)
+	status --pidfile $PIDFILE starter
+	RETVAL=$?
+	if [ $RETVAL -eq 0 ]; then
+		/usr/sbin/strongswan statusall
+	fi
+	;;
+  *)
+	msg_usage "$0 {start|stop|restart|reload|force-reload|status}"
+	exit 3
+	;;
+esac
+
+exit $RETVAL

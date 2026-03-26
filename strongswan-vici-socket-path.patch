@@ -1,0 +1,20 @@
+--- strongswan-6.0.5/src/libcharon/plugins/vici/python/vici/session.py.orig	2025-03-23 13:55:00.000000000 +0100
++++ strongswan-6.0.5/src/libcharon/plugins/vici/python/vici/session.py	2025-03-23 13:55:00.000000000 +0100
+@@ -10,7 +10,7 @@
+     def __init__(self, sock=None):
+         """Establish a session with an IKE daemon.
+
+-        By default, the session will connect to the `/var/run/charon.vici` Unix
++        By default, the session will connect to the `/run/strongswan/charon.vici` Unix
+         domain socket.
+
+         If there is a need to connect a socket in another location or set
+@@ -32,7 +32,7 @@
+                 sock.connect(('127.0.0.1', 4502))
+             else:
+                 sock = socket.socket(socket.AF_UNIX)
+-                sock.connect("/var/run/charon.vici")
++                sock.connect("/run/strongswan/charon.vici")
+         self.transport = Transport(sock)
+
+     def _communicate(self, packet):

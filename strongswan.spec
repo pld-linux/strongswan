@@ -1,15 +1,18 @@
 %bcond_without	python3
 %bcond_without	perl
-%bcond_with		tests
+%bcond_with	tests
 Summary:	IPsec-based VPN Solution for Linux
 Name:		strongswan
-Version:	6.0.4
-Release:	0.1
+Version:	6.0.5
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
 Source0:	http://download.strongswan.org/%{name}-%{version}.tar.bz2
-# Source0-md5:	f6b78a99e95179b6a65df218d75da7ca
-Source1:	tmpfiles-strongswan.conf
+# Source0-md5:	7049111627010dc02293970c82e43d28
+Source1:	tmpfiles-%{name}.conf
+Source2:	%{name}.init
+Source3:	%{name}.sysconfig
+Patch0:		%{name}-vici-socket-path.patch
 URL:		http://www.strongswan.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -26,6 +29,7 @@ BuildRequires:	openldap-devel
 BuildRequires:	openssl-devel
 BuildRequires:	pam-devel
 BuildRequires:	pkgconfig
+BuildRequires:	rpmbuild(macros) >= 1.671
 BuildRequires:	sqlite-devel
 BuildRequires:	systemd-devel
 BuildRequires:	tpm2-tss-devel
@@ -38,10 +42,11 @@ BuildRequires:	python3-setuptools
 %endif
 %if %{with perl}
 BuildRequires:	perl-devel
-BuildRequires:	perl-devel
 %endif
 BuildRequires:	NetworkManager-devel
-
+Requires(post,preun):	/sbin/chkconfig
+Requires(post,preun,postun):	systemd-units >= 38
+Requires:	rc-scripts >= 0.4.3.0
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -86,7 +91,6 @@ IMC/IMV dynamic libraries modules can be used by any third party TNC
 Client/Server implementation possessing a standard IF-IMC/IMV
 interface. In addition, it implements PT-TLS to support TNC over TLS.
 
-%if %{with python3}
 %package -n python3-vici
 Summary:	Strongswan Versatile IKE Configuration Interface python bindings
 BuildArch:	noarch
@@ -99,15 +103,7 @@ configure and control the IKE daemon.
 The Versatile IKE Configuration Interface (VICI) python bindings
 provides module for Strongswan runtime configuration from python
 applications.
-%endif
 
-The Versatile IKE Configuration Interface (VICI) python bindings
-provides module for Strongswan runtime configuration from python
-applications.
-%if %{with perl}
-The Versatile IKE Configuration Interface (VICI) python bindings
-provides module for Strongswan runtime configuration from python
-applications.
 %package -n perl-vici
 Summary:	Strongswan Versatile IKE Configuration Interface perl bindings
 BuildArch:	noarch
@@ -120,13 +116,10 @@ configure and control the IKE daemon.
 The Versatile IKE Configuration Interface (VICI) perl bindings
 provides module for Strongswan runtime configuration from perl
 applications.
-%endif
 
-The Versatile IKE Configuration Interface (VICI) perl bindings
-provides module for Strongswan runtime configuration from perl
-applications.
 %prep
 %setup -q
+%patch -P0 -p1
 
 %build
 %{__libtoolize}
@@ -213,9 +206,6 @@ applications.
 %ifarch x86_64 %{ix86}
 	--enable-aesni \
 %endif
-%if %{with python3}
-	PYTHON=%{__python3} --enable-python-wheels \
-%endif
 %if %{with perl}
 	--enable-perl-cpan \
 %endif
@@ -232,13 +222,15 @@ for p in bypass-lan; do
 done
 
 # ensure manual page is regenerated with local configuration
-rm -f src/ipsec/_ipsec.8
+rm src/ipsec/_ipsec.8
 
 %{__make}
 
-%if %{with python}
-sed -e "s,/var/run/charon.vici,%{_rundir}/strongswan/charon.vici," -i src/libcharon/plugins/vici/session.py
-%{__make} -C src/libcharon/plugins/vici/python
+%if %{with python3}
+cd src/libcharon/plugins/vici/python
+sed -e 's,@EGG_VERSION@,%{version},' setup.py.in > setup.py
+%py3_build
+cd ../../../../..
 %endif
 
 %if %{with perl}
@@ -272,7 +264,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %if %{with python3}
 cd src/libcharon/plugins/vici/python
-ln -sf dist build-3
 %py3_install
 cd ../../../../..
 %endif
@@ -280,6 +271,8 @@ cd ../../../../..
 %if %{with perl}
 %{__make} -C src/libcharon/plugins/vici/perl/Vici-Session install \
 	DESTDIR=$RPM_BUILD_ROOT
+%{__rm} $RPM_BUILD_ROOT%{perl_archlib}/perllocal.pod
+%{__rm} $RPM_BUILD_ROOT%{perl_vendorarch}/auto/Vici/Session/.packlist
 %endif
 
 # prefix man pages
@@ -290,23 +283,35 @@ for i in $RPM_BUILD_ROOT%{_mandir}/*/*; do
 done
 
 install -d $RPM_BUILD_ROOT%{_rundir}/strongswan
-install -d $RPM_BUILD_ROOT%{_tmpfilesdir}
-cp -p %{SOURCE1} $RPM_BUILD_ROOT%{_tmpfilesdir}/strongswan.conf
-cp -p %{SOURCE1} $RPM_BUILD_ROOT%{_tmpfilesdir}/strongswan-starter.conf
+install -d $RPM_BUILD_ROOT%{systemdtmpfilesdir}
+cp -p %{SOURCE1} $RPM_BUILD_ROOT%{systemdtmpfilesdir}/strongswan.conf
+cp -p %{SOURCE1} $RPM_BUILD_ROOT%{systemdtmpfilesdir}/strongswan-starter.conf
+
+install -d $RPM_BUILD_ROOT{/etc/rc.d/init.d,/etc/sysconfig}
+install -p %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/%{name}
+cp -p %{SOURCE3} $RPM_BUILD_ROOT/etc/sysconfig/%{name}
 
 rm $RPM_BUILD_ROOT%{_libdir}/%{name}/*.so
 rm $RPM_BUILD_ROOT%{_libdir}/%{name}/*.la
 rm $RPM_BUILD_ROOT%{_libdir}/%{name}/plugins/*.la
+rm $RPM_BUILD_ROOT%{_libdir}/%{name}/imcvs/*.la
 
 touch $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/ipsec.secrets
+echo '# EAP-SIM triplets: IMSI,RAND,SRES,Kc' > $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/ipsec.d/triplets.dat
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %post
+/sbin/chkconfig --add %{name}
+%service %{name} restart "strongSwan IPsec"
 %systemd_post %{name}.service
 
 %preun
+if [ "$1" = "0" ]; then
+	%service %{name} stop
+	/sbin/chkconfig --del %{name}
+fi
 %systemd_preun %{name}.service
 
 %postun
@@ -315,13 +320,44 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(644,root,root,755)
 %doc AUTHORS ChangeLog NEWS README TODO
+%attr(754,root,root) /etc/rc.d/init.d/%{name}
+%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/%{name}
 %dir %{_sysconfdir}/strongswan
-%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/%{name}.conf
+%attr(600,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/%{name}.conf
 %attr(600,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/ipsec.conf
 %attr(600,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/ipsec.secrets
-%attr(700,root,root) %config(noreplace) %{_sysconfdir}/%{name}/ipsec.d
-%attr(700,root,root) %config(noreplace) %{_sysconfdir}/%{name}/%{name}.d
-%attr(700,root,root) %config(noreplace) %{_sysconfdir}/%{name}/swanctl
+%dir %{_sysconfdir}/%{name}/ipsec.d
+%dir %{_sysconfdir}/%{name}/ipsec.d/aacerts
+%dir %{_sysconfdir}/%{name}/ipsec.d/acerts
+%dir %{_sysconfdir}/%{name}/ipsec.d/cacerts
+%dir %{_sysconfdir}/%{name}/ipsec.d/certs
+%dir %{_sysconfdir}/%{name}/ipsec.d/crls
+%dir %{_sysconfdir}/%{name}/ipsec.d/ocspcerts
+%dir %attr(700,root,root) %{_sysconfdir}/%{name}/ipsec.d/private
+%dir %{_sysconfdir}/%{name}/ipsec.d/reqs
+%attr(600,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/ipsec.d/triplets.dat
+%dir %{_sysconfdir}/%{name}/%{name}.d
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/%{name}.d/*.conf
+%exclude %{_sysconfdir}/%{name}/%{name}.d/charon-nm.conf
+%dir %{_sysconfdir}/%{name}/%{name}.d/charon
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/%{name}.d/charon/*.conf
+%dir %{_sysconfdir}/%{name}/%{name}.d/charon-cmd
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/%{name}.d/charon-cmd/*.conf
+%dir %attr(700,root,root) %{_sysconfdir}/%{name}/swanctl
+%dir %{_sysconfdir}/%{name}/swanctl/conf.d
+%dir %attr(700,root,root) %{_sysconfdir}/%{name}/swanctl/ecdsa
+%dir %attr(700,root,root) %{_sysconfdir}/%{name}/swanctl/pkcs12
+%dir %attr(700,root,root) %{_sysconfdir}/%{name}/swanctl/pkcs8
+%dir %attr(700,root,root) %{_sysconfdir}/%{name}/swanctl/private
+%dir %{_sysconfdir}/%{name}/swanctl/pubkey
+%dir %attr(700,root,root) %{_sysconfdir}/%{name}/swanctl/rsa
+%attr(600,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/swanctl/swanctl.conf
+%dir %{_sysconfdir}/%{name}/swanctl/x509
+%dir %{_sysconfdir}/%{name}/swanctl/x509aa
+%dir %{_sysconfdir}/%{name}/swanctl/x509ac
+%dir %{_sysconfdir}/%{name}/swanctl/x509ca
+%dir %{_sysconfdir}/%{name}/swanctl/x509crl
+%dir %{_sysconfdir}/%{name}/swanctl/x509ocsp
 %dir %{_libdir}/strongswan
 %exclude %{_libdir}/strongswan/imcvs
 %dir %{_libdir}/strongswan/plugins
@@ -361,7 +397,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_sbindir}/sw-collector
 %attr(755,root,root) %{_sbindir}/sec-updater
 %dir %{_libdir}/strongswan/imcvs
-%dir %{_libdir}/strongswan/plugins
+%{_libdir}/strongswan/imcvs/*.so
 %{_libdir}/strongswan/libimcv.so.*
 %{_libdir}/strongswan/libtnccs.so.*
 %{_libdir}/strongswan/plugins/libstrongswan-*tnc*.so
@@ -377,6 +413,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %files charon-nm
 %defattr(644,root,root,755)
+%dir %{_sysconfdir}/%{name}/%{name}.d/charon-nm
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/%{name}.d/charon-nm.conf
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/%{name}.d/charon-nm/*.conf
 %{_datadir}/dbus-1/system.d/nm-strongswan-service.conf
 %attr(755,root,root) %{_libexecdir}/strongswan/charon-nm
 
