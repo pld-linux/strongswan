@@ -30,7 +30,7 @@ else
 	exit 0
 fi
 
-PIDFILE=/var/run/strongswan/starter.charon.pid
+PIDFILE=/run/strongswan/starter.charon.pid
 
 RETVAL=0
 case "$1" in
@@ -42,6 +42,11 @@ case "$1" in
 		if [ $RETVAL -eq 0 ]; then
 			touch /var/lock/subsys/strongswan
 			show "Loading swanctl configuration"
+			# wait for charon to accept vici connections (starter forks before charon is ready)
+			for i in 1 2 3 4 5; do
+				/usr/sbin/swanctl --stats >/dev/null 2>&1 && break
+				sleep 1
+			done
 			daemon /usr/sbin/swanctl --load-all --noprompt
 		fi
 	else
@@ -51,8 +56,7 @@ case "$1" in
   stop)
 	if [ -f /var/lock/subsys/strongswan ]; then
 		msg_stopping "strongSwan"
-		/usr/sbin/strongswan stop
-		RETVAL=$?
+		daemon /usr/sbin/strongswan stop
 		rm -f /var/lock/subsys/strongswan
 	else
 		msg_not_running "strongSwan"
@@ -76,7 +80,7 @@ case "$1" in
 	fi
 	;;
   status)
-	status --pidfile $PIDFILE starter
+	status --pidfile $PIDFILE strongswan starter
 	RETVAL=$?
 	if [ $RETVAL -eq 0 ]; then
 		/usr/sbin/strongswan statusall
