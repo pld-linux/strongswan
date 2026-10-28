@@ -1,44 +1,41 @@
 %bcond_without	python3
 %bcond_without	perl
 %bcond_with	tests
+%bcond_with	ikev1	# without deprecated IKEv1 protocol support in charon
 Summary:	IPsec-based VPN Solution for Linux
 Name:		strongswan
-Version:	6.0.5
-Release:	4
+Version:	6.1.0
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons
-Source0:	http://download.strongswan.org/%{name}-%{version}.tar.bz2
-# Source0-md5:	7049111627010dc02293970c82e43d28
+Source0:	https://download.strongswan.org/%{name}-%{version}.tar.bz2
+# Source0-md5:	c789d4f7389057b6c99860bf1e52ed1e
 Source1:	tmpfiles-%{name}.conf
 Source2:	%{name}.init
 Source3:	%{name}.sysconfig
 Patch0:		%{name}-vici-socket-path.patch
-URL:		http://www.strongswan.org/
+URL:		https://www.strongswan.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	curl-devel
-BuildRequires:	gettext-devel
 BuildRequires:	gmp-devel >= 4.1.5
-BuildRequires:	iptables-devel
 BuildRequires:	json-c-devel
 BuildRequires:	libcap-devel
-BuildRequires:	libgcrypt-devel
+BuildRequires:	libselinux-devel
 BuildRequires:	libtool
-BuildRequires:	libxml2-devel
-BuildRequires:	openldap-devel
 BuildRequires:	openssl-devel
 BuildRequires:	pam-devel
 BuildRequires:	pkgconfig
 BuildRequires:	rpmbuild(macros) >= 1.671
-BuildRequires:	sqlite-devel
+BuildRequires:	sqlite3-devel
 BuildRequires:	systemd-devel
 BuildRequires:	tpm2-tss-devel
 %if %{with python3}
-BuildRequires:	python3-build
-BuildRequires:	python3-daemon
 BuildRequires:	python3-devel
-BuildRequires:	python3-pytest
 BuildRequires:	python3-setuptools
+%if %{with tests}
+BuildRequires:	python3-pytest
+%endif
 %endif
 %if %{with perl}
 BuildRequires:	perl-devel
@@ -55,6 +52,7 @@ system.
 
 %package libipsec
 Summary:	Strongswan's libipsec backend
+Requires:	%{name} = %{version}-%{release}
 
 %description libipsec
 The kernel-libipsec plugin provides an IPsec backend that works
@@ -63,6 +61,7 @@ implementation libipsec.
 
 %package charon-nm
 Summary:	NetworkManager plugin for Strongswan
+Requires:	%{name} = %{version}-%{release}
 Requires:	dbus
 
 %description charon-nm
@@ -140,6 +139,7 @@ applications.
 	--enable-nm \
 	--enable-systemd \
 	--enable-openssl \
+	%{__enable_disable ikev1} \
 	--enable-unity \
 	--enable-ctr \
 	--enable-ccm \
@@ -147,7 +147,6 @@ applications.
 	--enable-chapoly \
 	--enable-md4 \
 	--enable-ml \
-	--enable-gcrypt \
 	--enable-xauth-eap \
 	--enable-xauth-pam \
 	--enable-xauth-noauth \
@@ -173,16 +172,12 @@ applications.
 	--enable-farp \
 	--enable-dhcp \
 	--enable-ha \
-	--enable-led \
 	--enable-sql \
 	--enable-sqlite \
-	--enable-tnc-ifmap \
 	--enable-tnc-pdp \
 	--enable-tnc-imc \
 	--enable-tnc-imv \
 	--enable-tnccs-20 \
-	--enable-tnccs-11 \
-	--enable-tnccs-dynamic \
 	--enable-imc-test \
 	--enable-imv-test \
 	--enable-imc-scanner \
@@ -200,7 +195,6 @@ applications.
 	--enable-acert \
 	--enable-vici \
 	--enable-swanctl \
-	--enable-duplicheck \
 	--enable-selinux \
 	--enable-stroke \
 %ifarch x86_64 %{ix86}
